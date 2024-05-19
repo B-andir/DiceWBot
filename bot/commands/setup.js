@@ -1,8 +1,7 @@
-const fs = require('fs')
-const path = require('node:path');
 const { v4: uuidv4 } = require('uuid')
-const { SlashCommandBuilder, ChannelType, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Embed } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const { isNumber } = require('util');
+const settingsCache = require('../utility/settingsCache.js')
 
 var jsonData;
 
@@ -49,6 +48,8 @@ module.exports = {
 
     async execute(interaction) {
 
+        const settings = settingsCache.GetCachedSettings();
+
         // Logging setup
         if (interaction.options.getSubcommand() === 'logging') {
 
@@ -60,36 +61,12 @@ module.exports = {
             // Clean channel input value
             const channel = channelInput.replace(/\D/g, '');
 
-            // Get logging settings object array
-            fs.readFile('./bot/function-settings.json', 'utf8', async (error, jsonString) => {
-                if (error) {
-                    console.log(`Error reading file: ${error}`);
-                    await interaction.reply({ content: 'There was an error, please try again.', ephemeral: true });
-                    return;
-                }
-                
-                try {
-                    jsonData = JSON.parse(jsonString);
-    
-                    // New setting object
-                    const newObj = { 'guildId': interaction.guildId, 'channelId': channel };
-                    jsonData.logging = appendOrUpdateObject(newObj, jsonData.logging, 'guildId')
-    
-                    // Write updated jsonData to the settings file
-                    fs.writeFile('./bot/function-settings.json', JSON.stringify(jsonData, null, 4), async (error) => {
-                        if (error) {
-                            console.log(`Error writing to file: ${error}`);
-                            await interaction.reply({ content: 'There was an error, please try again.', ephemeral: true });
-                            return;
-                        }
-    
-                        console.log('Data has been successfully saved to the function-settings.json file.')
-                    });
-                } catch (error) {
-                    console.error(`Error parsing JSON string: ${error}`);
-                    await interaction.reply({ content: 'There was an error, please try again.', ephemeral: true });
-                }
-            });
+            // New setting object
+            const newObj = { 'guildId': interaction.guildId, 'channelId': channel };
+            settings.logging = appendOrUpdateObject(newObj, settings.logging, 'guildId')
+
+            // Write updated jsonData to the settings file
+            settingsCache.SaveSettings(settings);
 
             await interaction.reply({ content: `Channel <#${channel}> set up for logging.`, ephemeral: true });
 
@@ -108,38 +85,13 @@ module.exports = {
 
             const uuid = uuidv4().split('-')[0];
 
-            fs.readFile('./bot/function-settings.json', 'utf8', async (error, jsonString) => {
-                if (error) {
-                    console.log(`Error reading file: ${error}`);
-                    await interaction.reply({ content: 'There was an error, please try again.', ephemeral: true });
-                    return;
-                }
-                
-                try {
-                
-                    jsonData = await JSON.parse(jsonString);
 
-                    // New setting object
-                    const newObj = { 'guildId': interaction.guildId, 'id': uuid };
-                    appendOrUpdateObject(newObj, jsonData.websites, 'guildId')
+            // New setting object
+            const newObj = { 'guildId': interaction.guildId, 'id': uuid };
+            appendOrUpdateObject(newObj, settings.websites, 'guildId')
 
-                    // Write updated jsonData to the settings file
-                    fs.writeFile('./bot/function-settings.json', JSON.stringify(jsonData, null, 4), async (error) => {
-                        if (error) {
-                            console.log(`Error writing to file: ${error}`);
-                            await interaction.reply({ content: 'There was an error, please try again.', ephemeral: true });
-                            return;
-                        }
+            settingsCache.SaveSettings(settings);
 
-                        console.log('Data has been successfully saved to the function-settings.json file.')
-                    });
-                    
-                } catch (error) {
-                    console.error(`Error parsing JSON string: ${error}`);
-                    await interaction.reply({ content: 'There was an error, please try again.', ephemeral: true });
-                    return;
-                }
-            });
 
             // Setup custom link
             const newUrl = process.env.URL + "?id=" + uuid;

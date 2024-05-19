@@ -2,7 +2,9 @@
     "logging": [
         {
             "guildId": "1240240802534391838",
-            "channelId": "1240382858372059188"
+            "channelId": "1240382858372059188",
+            "buttonMessageId": "1241789640994979990",
+            "standaloneMessage": false
         },
         {
             "guildId": "1229183177420177572",
@@ -12,11 +14,17 @@
     "websites": [
         {
             "guildId": "1240240802534391838",
-            "id": "4db4837d"
+            "id": "ad07ca85"
         },
         {
             "guildId": "1229183177420177572",
             "id": "6af91f3c-5d35-4ea1-80d6-e687041dac63"
+        }
+    ],
+    "users": [
+        {
+            "id": "274583698089967617",
+            "disablePings": false
         }
     ]
 }

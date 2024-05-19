@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, GatewayIntentBits, Collection, Events } = require('discord.js')
+const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
+const settingsCache = require('./utility/settingsCache.js')
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages] });
 
@@ -25,29 +26,144 @@ for (const file of commandFiles) {
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+
+	settingsCache.UpdateCache();
 });
 
 
 client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand()) return;
+	
+	if (interaction.isButton()) {
 
-	const command = interaction.client.commands.get(interaction.commandName);
+		if (interaction.customId === "rollDiceButton") {
+			
+			try {
+				const rollCommand = interaction.client.commands.get('r');
 
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
-	}
-    
-	try {
-		await command.execute(interaction);
-	} catch (error) {
-		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+				await rollCommand.execute(interaction);
+			} catch (error) {
+				console.error(error);
+				if (interaction.replied || interaction.deferred) {
+					await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+				} else {
+					await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+				}
+			}
 		}
 	}
+
+	if (interaction.isChatInputCommand()) {
+		const command = interaction.client.commands.get(interaction.commandName);
+
+		if (!command) {
+			console.error(`No command matching ${interaction.commandName} was found.`);
+			return;
+		}
+		
+		try {
+			await command.execute(interaction);
+		} catch (error) {
+			console.error(error);
+			if (interaction.replied || interaction.deferred) {
+				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+			} else {
+				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			}
+		}
+	}
+
+	
+});
+
+
+const rollButton = new ButtonBuilder()
+	.setCustomId('rollDiceButton')
+	.setLabel('Roll the Dice')
+	.setStyle(ButtonStyle.Primary)
+
+const rollActionRow = new ActionRowBuilder()
+	.addComponents(rollButton)	
+
+// Roll Dice button on bottom of Dice Channel
+client.on(Events.MessageCreate, async message => {
+
+	let settings = settingsCache.GetCachedSettings();
+	
+	const loggingChannel = await settings.logging.find((element) => { return element.channelId == message.channel });
+
+	if (loggingChannel) {
+		// console.log(message)
+
+		if (message.components) {
+			if (message.components.includes(rollActionRow)) {
+				console.log("Message already has action row.");
+				return;
+			}
+		}
+
+		const channel = await client.channels.cache.get(loggingChannel.channelId);
+		
+		// If there is a message with a button, remove the button from that message.
+		if (loggingChannel.buttonMessageId) {
+			const oldMessage = await channel.messages.fetch(loggingChannel.buttonMessageId);
+		
+			try {
+				// If standalone message, delete message
+				if (loggingChannel.standaloneMessage) {
+					
+					oldMessage.delete();
+	
+				// Edit message to remove the components
+				} else {
+		
+					oldMessage.edit({ components: [] });
+				}
+			} catch (error) {
+				console.log("There was an error removing old button. As a result, it will not be removed. Error: ")
+				console.log(error);
+			}
+		
+		}
+
+
+		// If last message was sent by this client
+		if (message.author.id == client.user.id) {
+			
+			message.edit( { components: [rollActionRow] } )
+
+			// Update the logging object
+			for (let log of settings.logging) {
+				if (log.guildId === message.guildId || log.channelId === message.channelId) {
+					log.buttonMessageId = message.id;
+					log.standaloneMessage = false;
+					settingsCache.SaveSettings(settings);
+					break;
+				}
+			}
+
+
+		// Message was sent by a user, so send a new message with the action row
+		} else {
+
+			channel.send({ components: [rollActionRow] })
+				.then(newMessage => {
+
+					// Update the logging object
+					for (let log of settings.logging) {
+						if (log.guildId === newMessage.guildId || log.channelId === newMessage.channelId) {
+							log.buttonMessageId = newMessage.id;
+							log.standaloneMessage = true;
+							settingsCache.SaveSettings(settings);
+							break;
+						}
+					}
+				}).catch(console.error);
+
+		}
+		
+
+	}
+	
 });
 
 function clientLogin() {
@@ -56,43 +172,29 @@ function clientLogin() {
 
 
 // Log Rolls
-function logRoll(id, displayName, percentage, dice) {
-	
-	fs.readFile('./bot/function-settings.json', 'utf8', async (error, jsonString) => {
-		if (error) {
-			console.error(`Error reading file: ${error}`);
+async function logRoll(id, displayName, percentage, dice) {
+
+	const settings = settingsCache.GetCachedSettings();
+
+	const targetGuild = settings.websites.find((element) => { return element.id == id });
+
+	if (targetGuild) {
+		const targetChannel = await settings.logging.find((element) => { return element.guildId == targetGuild.guildId });
+
+		if (targetChannel) {
+
+			const channel = client.channels.cache.get(targetChannel.channelId);
+
+			await channel.send(`## Percentage: ${percentage}%\n> Rolls: **${dice[0]}** & **${dice[1]}**\t\t*~ ${displayName}*`);
+
+		} else {
+			console.error('There was an error logging dice roll. Could not find target channel of guildId: ' + targetGuild.guildId);
 			return;
 		}
-		
-		try {
-			const jsonData = JSON.parse(jsonString);
-
-			const targetGuild = jsonData.websites.find((element) => { return element.id == id });
-
-			if (targetGuild) {
-				const targetChannel = await jsonData.logging.find((element) => { return element.guildId == targetGuild.guildId });
-
-				if (targetChannel) {
-
-					const channel = client.channels.cache.get(targetChannel.channelId);
-
-					await channel.send(`## Percentage: ${percentage}%\n> Rolls: **${dice[0]}** & **${dice[1]}**\n\t\t\t\t\t\t\t\t*~ ${displayName}*`);
-
-				} else {
-					console.error('There was an error logging dice roll. Could not find target channel of guildId: ' + targetGuild.guildId);
-					return;
-				}
-			} else {
-				console.error('There was an error logging dice roll. Could not find target guild of id: ' + id);
-				return;
-			}
-
-
-		} catch (error) {
-			console.error(`Error parsing JSON string: ${error}`);
-			return
-		}
-	});
+	} else {
+		console.error('There was an error logging dice roll. Could not find target guild of id: ' + id);
+		return;
+	}
 
 }
 
