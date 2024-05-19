@@ -1,8 +1,9 @@
 const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 const { SlashCommandBuilder } = require('discord.js');
-const generatePercent = require('../../utility/generate-percentage.js')
-const percentToNumbers = require('../../utility/percent-to-dice.js')
+const generatePercent = require(path.join(__dirname, '../../utility/generate-percentage.js'));
+const percentToNumbers = require(path.join(__dirname, '../../utility/percent-to-dice.js'));
 
 module.exports = {
 	data: new SlashCommandBuilder()
