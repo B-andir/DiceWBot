@@ -1,5 +1,5 @@
-const genPercent = require('../utility/generate-percentage.js');
-const percentToDice = require('../utility/percent-to-dice.js');
+const genPercent = require('../Utility/generate-percentage.js');
+const percentToDice = require('../Utility/percent-to-dice.js');
 
 const { logRoll } = require('../bot/bot-client.js');
 
