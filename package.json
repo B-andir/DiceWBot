@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
+    "dev": "nodemon --ignore bot/function-settings.json",
     "update": "node ./bot/deploy-commands-testing.js",
     "update-global": "node ./bot/deploy-commands-global.js"
   },
@@ -26,9 +26,9 @@
   },
   "homepage": "https://github.com/B-andir/DiceWBot#readme",
   "devDependencies": {
-    "nodemon": "^3.1.0"
   },
   "dependencies": {
+    "nodemon": "^3.1.0",
     "axios": "^1.6.8",
     "discord.js": "^14.15.2",
     "dotenv": "^16.4.5",

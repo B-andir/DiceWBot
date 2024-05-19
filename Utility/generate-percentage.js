@@ -10,6 +10,5 @@ module.exports = (async () => {
             console.error('Error generating random integers:', error.message);
         });
 
-    console.log(percent);
     return percent;
 });

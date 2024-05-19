@@ -50,4 +50,52 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-module.exports = client.login(process.env.BOT_TOKEN);
+function clientLogin() {
+	client.login(process.env.BOT_TOKEN)
+}
+
+
+// Log Rolls
+function logRoll(id, displayName, percentage, dice) {
+	
+	fs.readFile('./bot/function-settings.json', 'utf8', async (error, jsonString) => {
+		if (error) {
+			console.error(`Error reading file: ${error}`);
+			return;
+		}
+		
+		try {
+			const jsonData = JSON.parse(jsonString);
+
+			const targetGuild = jsonData.websites.find((element) => { return element.id == id });
+
+			if (targetGuild) {
+				const targetChannel = await jsonData.logging.find((element) => { return element.guildId == targetGuild.guildId });
+
+				if (targetChannel) {
+
+					const channel = client.channels.cache.get(targetChannel.channelId);
+
+					await channel.send(`## Percentage: ${percentage}%\n> Rolls: **${dice[0]}** & **${dice[1]}**\n\t\t\t\t\t\t\t\t*~ ${displayName}*`);
+
+				} else {
+					console.error('There was an error logging dice roll. Could not find target channel of guildId: ' + targetGuild.guildId);
+					return;
+				}
+			} else {
+				console.error('There was an error logging dice roll. Could not find target guild of id: ' + id);
+				return;
+			}
+
+
+		} catch (error) {
+			console.error(`Error parsing JSON string: ${error}`);
+			return
+		}
+	});
+
+}
+
+
+
+module.exports = { clientLogin, logRoll };

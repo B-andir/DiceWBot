@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Site</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <form onchange="UpdateDisplayName()">
+        <input id="username" type="text" placeholder="Display Name" spellcheck="false">
+    </form>
+    <button id="rollButton">ROLL</button>
+    <h2 id="result"></h2>
+    <div id="specified">
+        <div class="flex-container">
+            <h3 id="specifiedLeft"></h3>
+            <h3 id="specifiedRight"></h3>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
