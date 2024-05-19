@@ -49,7 +49,11 @@ module.exports = {
                         const userSettings = await settings.users.find((element) => { return element.id == interaction.user.id });
 
                         if (userSettings && userSettings.disablePings === true) {
-                            await interaction.channel.send(`## Percentage: ${percent}%\n> Rolls: **${numbers[0]}** & **${numbers[1]}**\t\t*~ ${interaction.user.displayName}*\n-----`);
+                            let name = interaction.user.displayName;
+                            if (interaction.member.nickname)
+                                name = interaction.member.nickname;
+
+                            await interaction.channel.send(`## Percentage: ${percent}%\n> Rolls: **${numbers[0]}** & **${numbers[1]}**\t\t*~ ${name}*\n-----`);
                         } else {
                             await interaction.channel.send(`## Percentage: ${percent}%\n> Rolls: **${numbers[0]}** & **${numbers[1]}**\t\t*~ <@${interaction.user.id}>*\n-----`);
                         }

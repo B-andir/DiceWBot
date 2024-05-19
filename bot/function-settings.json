@@ -3,7 +3,7 @@
         {
             "guildId": "1240240802534391838",
             "channelId": "1240382858372059188",
-            "buttonMessageId": "1241789640994979990",
+            "buttonMessageId": "1241857434939691111",
             "standaloneMessage": false
         },
         {
@@ -24,7 +24,7 @@
     "users": [
         {
             "id": "274583698089967617",
-            "disablePings": false
+            "disablePings": true
         }
     ]
 }

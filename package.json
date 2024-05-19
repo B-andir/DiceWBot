@@ -7,7 +7,8 @@
     "start": "node index.js",
     "dev": "nodemon --ignore bot/function-settings.json",
     "update": "node ./bot/deploy-commands-testing.js",
-    "update-global": "node ./bot/deploy-commands-global.js"
+    "update-global": "node ./bot/deploy-commands-global.js",
+    "update-production": "node ./bot/deploy-commands-global-production.js"
   },
   "repository": {
     "type": "git",
