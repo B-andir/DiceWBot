@@ -6,6 +6,8 @@ const soundboard = require('./utility/soundboard.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] });
 
+let settingsExist = false;
+
 client.commands = new Collection();
 
 //create a list of files in command directory that end with .js
@@ -27,6 +29,8 @@ for (const file of commandFiles) {
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+	
+	loggingSetup();
 });
 
 
@@ -167,10 +171,31 @@ client.on(Events.MessageCreate, async message => {
 async function clientLogin() {
 	await client.login(process.env.BOT_TOKEN).then(async () => {
 		await settingsCache.UpdateCache().then(() => {
+			settingsExist = true;
 			soundboard.initialize();
 		});
 	});
 
+}
+
+
+// ---- MISCELANEOUS -----
+
+function appendOrUpdateObject(newObj, targetArray, key) {
+    const existingIndex = targetArray?.findIndex(item => item[key] === newObj[key]);
+    if (!existingIndex) {
+        targetArray = []
+    }
+
+    if (existingIndex && existingIndex !== -1) {
+        // If object with the same key value exists, update it
+        targetArray[existingIndex] = newObj;
+    } else {
+        // Otherwise, append the new object
+        targetArray.push(newObj);
+    }
+
+    return targetArray;
 }
 
 
@@ -228,6 +253,27 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 
 });
 
+
+// Setup logging from environment vars
+async function loggingSetup() {
+	if (process.env.LOGGING_CHANNEL && process.env.LOGGING_CHANNEL_GUILD) {
+		console.log("Setting up logging from environment variables ...")
+
+		let settings = settingsCache.GetCachedSettings();
+	
+		// New setting object
+		const newObj = { 'guildId': process.env.LOGGING_CHANNEL_GUILD, 'channelId': process.env.LOGGING_CHANNEL };
+		settings.logging = appendOrUpdateObject(newObj, settings.logging, 'guildId')
+
+		// Write updated jsonData to the settings file
+		settingsCache.SaveSettings(settings);
+
+		console.log("Logging successfully set up!")
+	}
+}
+
+
+// ----- Exports -----
 
 module.exports = { clientLogin, logRoll };
 exports.client = client
