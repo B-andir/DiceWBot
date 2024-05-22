@@ -3,7 +3,7 @@
         {
             "guildId": "1240240802534391838",
             "channelId": "1240382858372059188",
-            "buttonMessageId": "1242657727503667220",
+            "buttonMessageId": "1242662651256111308",
             "standaloneMessage": false
         },
         {
@@ -30,7 +30,7 @@
     "connections": [
         {
             "guildId": "1240240802534391838",
-            "channelId": "none"
+            "channelId": "1240240802978992149"
         }
     ]
 }
