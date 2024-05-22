@@ -1,6 +1,6 @@
 const fs = require('fs');
 const axios = require('axios');
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, underline } = require('discord.js');
 const generatePercent = require('../../Utility/generate-percentage.js')
 const percentToNumbers = require('../../Utility/percent-to-dice.js')
 const { GetCachedSettings } = require('../utility/settingsCache.js')
@@ -14,9 +14,9 @@ module.exports = {
 
         const settings = GetCachedSettings();
 
-        try {
+        // try {
 
-            const guildRule = settings.logging.find(item => item.guildId === interaction.guildId)
+            const guildRule = settings.logging?.find(item => item.guildId === interaction.guildId);
 
             if (guildRule && guildRule.channelId != interaction.channelId) {
                 // Restrict dice rolls to dice-log channel
@@ -48,7 +48,7 @@ module.exports = {
                             interaction.deleteReply();
                         }
 
-                        const userSettings = await settings.users.find((element) => { return element.id == interaction.user.id });
+                        const userSettings = await settings.users?.find((element) => { return element.id == interaction.user.id }) ?? undefined;
 
                         if (userSettings && userSettings.disablePings === true) {
                             let name = interaction.user.displayName;
@@ -64,11 +64,11 @@ module.exports = {
                     })
             }
 
-        } catch (error) {
-            console.error(`There was an error reading JSON settings data: ${error}`);
-            interaction.reply({ content: 'There was an error, please try again later', ephemeral: true })
-            return;
-        }
+        // } catch (error) {
+        //     console.error(`There was an error reading JSON settings data: ${error}`);
+        //     interaction.reply({ content: 'There was an error, please try again later', ephemeral: true })
+        //     return;
+        // }
 
 
 	},

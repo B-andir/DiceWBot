@@ -7,8 +7,19 @@ async function UpdateCache() {
     
     fs.readFile(path.join(__dirname, '../function-settings.json'), 'utf8', (error, jsonString) => {
         if (error) {
+            if (error.code == "ENOENT") {
+                fs.writeFile(path.join(__dirname, '../function-settings.json'), "{}", { flag: 'wx' }, (err) => {
+                    if (err) throw err;
+
+                    console.log('No existing function-settings.json file was found. A new one was made instead.')
+                    settingsCache = {}
+                    return settingsCache;
+                });
+            }
             console.warn(error);
+
             return error;
+
         }
 
         settingsCache = JSON.parse(jsonString);

@@ -14,9 +14,13 @@ function appendOrUpdateObject(newObj, targetArray, key) {
         return targetArray;
     }
 
-    const existingIndex = targetArray.findIndex(item => item[key] === newObj[key]);
+    const existingIndex = targetArray?.findIndex(item => item[key] === newObj[key]);
 
-    if (existingIndex !== -1) {
+    if (!existingIndex) {
+        targetArray = []
+    }
+
+    if (existingIndex && existingIndex !== -1) {
         // If object with the same key value exists, update it
         targetArray[existingIndex] = newObj;
     } else {
@@ -128,13 +132,18 @@ module.exports = { playRollSound, joinVoice, disconnectVoice, initialize: () => 
 
         
         try {
-            settings.connections.forEach(connection => {
-                if (connection.channelId != 'none') {
-                    setTimeout(() => {
-                        joinVoice(connection.channelId, connection.guildId, true);
-                    }, 1000)
-                }
-            });
+            if (settings.connections) {
+                settings.connections.forEach(connection => {
+                    if (connection.channelId != 'none') {
+                        console.log("Found active connection! Joining.");
+                        setTimeout(() => {
+                            joinVoice(connection.channelId, connection.guildId, true);
+                        }, 1000)
+                    }
+                });
+            } else {
+                console.log("No active connections to join.")
+            }
         } catch (error) {
             console.log(`There was an error when attempting connection. Error: ${error}`);
         }

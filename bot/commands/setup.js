@@ -6,8 +6,12 @@ const settingsCache = require('../utility/settingsCache.js')
 var jsonData;
 
 function appendOrUpdateObject(newObj, targetArray, key) {
-    const existingIndex = targetArray.findIndex(item => item[key] === newObj[key]);
-    if (existingIndex !== -1) {
+    const existingIndex = targetArray?.findIndex(item => item[key] === newObj[key]);
+    if (!existingIndex) {
+        targetArray = []
+    }
+
+    if (existingIndex && existingIndex !== -1) {
         // If object with the same key value exists, update it
         targetArray[existingIndex] = newObj;
     } else {
@@ -33,17 +37,17 @@ module.exports = {
                     .setRequired(false)
                     .addChannelTypes(ChannelType.GuildText))
         )   
-    .addSubcommand(subcomand =>
-        subcomand
-            .setName('website')
-            .setDescription('Generate website link specific for the server. Required for logging to function.')
-            .addChannelOption(option => 
-                option
-                    .setName('channel')
-                    .setDescription('Channel to send website link to. Empty = this channel')
-                    .setRequired(false)
-                    .addChannelTypes(ChannelType.GuildText))
-        )
+    // .addSubcommand(subcomand =>
+    //     subcomand
+    //         .setName('website')
+    //         .setDescription('Generate website link specific for the server. Required for logging to function.')
+    //         .addChannelOption(option => 
+    //             option
+    //                 .setName('channel')
+    //                 .setDescription('Channel to send website link to. Empty = this channel')
+    //                 .setRequired(false)
+    //                 .addChannelTypes(ChannelType.GuildText))
+    //     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {

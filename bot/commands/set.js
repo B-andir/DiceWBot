@@ -22,7 +22,7 @@ module.exports = {
 
 		),
 	async execute(interaction) {
-		const settings = settingsCache.GetCachedSettings();
+		let settings = settingsCache.GetCachedSettings();
 
 		if (interaction.options.getSubcommand() === 'mentions') {
 
@@ -30,13 +30,19 @@ module.exports = {
 			const disablePings = interaction.options.getString('value') === 'off'
 
 
-			const existingIndex = settings.users.findIndex(item => item['id'] === interaction.user.id);
+			const existingIndex = settings.users?.findIndex(item => item['id'] === interaction.user.id);
 
-			if (existingIndex !== -1) {
+			if (!existingIndex) {
+				settings.users = []
+			}
+
+			if (existingIndex && existingIndex !== -1) {
 				settings.users[existingIndex] = { id: interaction.user.id, disablePings: disablePings };
 			} else {
 				settings.users.push({ id: interaction.user.id, disablePings: disablePings})
 			}
+
+			settingsCache.SaveSettings(settings);
 
 			if (disablePings) {
 

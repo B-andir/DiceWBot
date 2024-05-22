@@ -85,10 +85,9 @@ const rollActionRow = new ActionRowBuilder()
 
 // Roll Dice button on bottom of Dice Channel
 client.on(Events.MessageCreate, async message => {
-
 	let settings = settingsCache.GetCachedSettings();
 	
-	const loggingChannel = await settings.logging.find((element) => { return element.channelId == message.channel });
+	const loggingChannel = await settings.logging?.find((element) => { return element.channelId == message.channel });
 
 	if (loggingChannel) {
 		// console.log(message)
@@ -180,10 +179,10 @@ async function logRoll(id, displayName, percentage, dice) {
 
 	const settings = settingsCache.GetCachedSettings();
 
-	const targetGuild = settings.websites.find((element) => { return element.id == id });
+	const targetGuild = settings.websites?.find((element) => { return element.id == id });
 
 	if (targetGuild) {
-		const targetChannel = await settings.logging.find((element) => { return element.guildId == targetGuild.guildId });
+		const targetChannel = await settings.logging?.find((element) => { return element.guildId == targetGuild.guildId });
 
 		if (targetChannel) {
 
