@@ -85,8 +85,8 @@ function playRollSound(percentage, guildId, userId) {
 
     player.play(diceAudio);
 
-    //userId == "274583698089967617" && 
-    if ((percentage >= 80 || percentage == 69)) {
+
+    if (userId == "274583698089967617" && (percentage >= 80 || percentage == 69)) {
         setTimeout(() => {
             let audio;
             if (percentage == 69) {
