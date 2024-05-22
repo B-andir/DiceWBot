@@ -1,3 +1,6 @@
+# Bot Settings
+bot/function-settings.json
+
 # Logs
 logs
 *.log

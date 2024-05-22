@@ -4,6 +4,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const generatePercent = require('../../Utility/generate-percentage.js')
 const percentToNumbers = require('../../Utility/percent-to-dice.js')
 const { GetCachedSettings } = require('../utility/settingsCache.js')
+const { playRollSound } = require('../utility/soundboard.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -25,7 +26,6 @@ module.exports = {
                 if (interaction.isChatInputCommand())
                     await interaction.reply({ content: `Rolling Dice...`, ephemeral: true });
 
-
                 let percent = 0;
                 generatePercent()
                     .then((result) => {
@@ -39,6 +39,8 @@ module.exports = {
                                 await interaction.reply('**There was an error, please try again**')
                             }
                         }
+
+                        playRollSound(percent, interaction.guildId, interaction.user.id);
         
                         const numbers = await percentToNumbers(percent)
 

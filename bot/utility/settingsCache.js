@@ -5,7 +5,7 @@ var settingsCache;
 
 async function UpdateCache() {
     
-    fs.readFile(path.join(__dirname, '../function-settings.json'), 'utf8', async (error, jsonString) => {
+    fs.readFile(path.join(__dirname, '../function-settings.json'), 'utf8', (error, jsonString) => {
         if (error) {
             console.warn(error);
             return error;
@@ -14,6 +14,7 @@ async function UpdateCache() {
         settingsCache = JSON.parse(jsonString);
         console.log("Settings Cache Updated.")
 
+        return settingsCache;
     });
 
 }

@@ -2,8 +2,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
 const settingsCache = require('./utility/settingsCache.js')
+const soundboard = require('./utility/soundboard.js');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] });
 
 client.commands = new Collection();
 
@@ -26,8 +27,6 @@ for (const file of commandFiles) {
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
-
-	settingsCache.UpdateCache();
 });
 
 
@@ -166,8 +165,13 @@ client.on(Events.MessageCreate, async message => {
 	
 });
 
-function clientLogin() {
-	client.login(process.env.BOT_TOKEN)
+async function clientLogin() {
+	await client.login(process.env.BOT_TOKEN).then(async () => {
+		await settingsCache.UpdateCache().then(() => {
+			soundboard.initialize();
+		});
+	});
+
 }
 
 
@@ -198,6 +202,33 @@ async function logRoll(id, displayName, percentage, dice) {
 
 }
 
+// Soundboard
+client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
+	if (oldState.member.user.bot || newState.member.user.bot) return;
+
+
+	let newUserChannel = newState.channelId;
+	let oldUserChannel = oldState.channelId;
+
+
+	if (newUserChannel) {
+
+		setTimeout(async () => {
+			await soundboard.joinVoice(newState.channelId, newState.guild.id, false);
+		}, 500)
+
+
+	} else if (oldUserChannel) {
+		let targetChannel = client.channels.cache.find(c => c.id == oldUserChannel)
+
+		if(targetChannel.members.size <= 1) {
+			await soundboard.disconnectVoice(oldState.guild.id);
+		}
+
+	}
+
+});
 
 
 module.exports = { clientLogin, logRoll };
+exports.client = client
