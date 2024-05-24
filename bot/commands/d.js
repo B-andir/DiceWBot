@@ -10,7 +10,7 @@ const { response } = require('express');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('d')
-		.setDescription('Roll Xd10')
+		.setDescription('Roll for Damage')
         .addNumberOption(option => 
             option
                 .setName('dice-count')

@@ -17,9 +17,11 @@ module.exports = {
         ),
 	async execute(interaction) {
 
-        if (interaction.options.getNumber('dice-count')) {
-            require('./d.js').execute(interaction);
-            return;
+        if (interaction.isChatInputCommand()) {
+            if (interaction.options.getNumber('dice-count')) {
+                require('./d.js').execute(interaction);
+                return;
+            }
         }
 
         const settings = GetCachedSettings();
