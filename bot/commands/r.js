@@ -7,8 +7,20 @@ const { playRollSound } = require('../utility/soundboard.js');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('r')
-		.setDescription('Roll a percentage check.'),
+		.setDescription('Roll the dice. Percentage check by default')
+        .addNumberOption(option => 
+            option
+                .setName('dice-count')
+                .setDescription('Number of dice to roll.')
+                .setMaxValue(10)
+                .setMinValue(1)
+        ),
 	async execute(interaction) {
+
+        if (interaction.options.getNumber('dice-count')) {
+            require('./d.js').execute(interaction);
+            return;
+        }
 
         const settings = GetCachedSettings();
 
@@ -53,9 +65,9 @@ module.exports = {
                             if (interaction.member.nickname)
                                 name = interaction.member.nickname;
 
-                            await interaction.channel.send(`## Percentage: ${percent}%\n> Rolls: **${numbers[0]}** & **${numbers[1]}**\t\t*~ ${name}*\n-----`);
+                            await interaction.channel.send(`## Percentage: ${percent}%\n> Rolls: **${numbers[0]}**  |  **${numbers[1]}**\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`);
                         } else {
-                            await interaction.channel.send(`## Percentage: ${percent}%\n> Rolls: **${numbers[0]}** & **${numbers[1]}**\t\t*~ <@${interaction.user.id}>*\n-----`);
+                            await interaction.channel.send(`## Percentage: ${percent}%\n> Rolls: **${numbers[0]}**  |  **${numbers[1]}**\n\t\t\t\t\t\t\t\t\t*~ <@${interaction.user.id}>*\n-----`);
                         }
 
 

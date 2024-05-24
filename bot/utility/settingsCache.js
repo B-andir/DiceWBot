@@ -32,7 +32,7 @@ async function UpdateCache() {
 
 async function SaveSettings(newData) {
 
-    if (newData === "" || JSON.stringify(newData).length < 5) {
+    if (!newData || newData === "" || JSON.stringify(newData).length < 5) {
         let error = "Tried to save empty settings! Aborting save";
         console.warn(error);
         return error;

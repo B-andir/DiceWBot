@@ -259,11 +259,16 @@ async function loggingSetup() {
 	if (process.env.LOGGING_CHANNEL && process.env.LOGGING_CHANNEL_GUILD) {
 		console.log("Setting up logging from environment variables ...")
 
-		let settings = settingsCache.GetCachedSettings();
+		let settings = await settingsCache.GetCachedSettings();
 	
 		// New setting object
 		const newObj = { 'guildId': process.env.LOGGING_CHANNEL_GUILD, 'channelId': process.env.LOGGING_CHANNEL };
-		settings.logging = appendOrUpdateObject(newObj, settings.logging, 'guildId')
+		try {
+			settings.logging = appendOrUpdateObject(newObj, settings.logging, 'guildId')
+		} catch (error) {
+			console.error('There was an error building logging from environment vars: ' + error);
+			return;
+		}
 
 		// Write updated jsonData to the settings file
 		settingsCache.SaveSettings(settings);
