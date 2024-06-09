@@ -29,12 +29,11 @@ module.exports = {
         try {
 
             const guildRule = settings.logging?.find(item => item.guildId === interaction.guildId);
+            const secondaryRule = settings.secondaryRolling?.find(item => item.guildId === interaction.guildId);
 
-            if (guildRule && guildRule.channelId != interaction.channelId) {
-                // Restrict dice rolls to dice-log channel
-                await interaction.reply({ content: `Please only roll dice in <#${guildRule.channelId}>`, ephemeral: true })
+            if ((guildRule && guildRule.channelId == interaction.channelId) || (secondaryRule && secondaryRule.channelId == interaction.channelId)) {
+                // Restrict dice rolls to dice-log and secondary channels
                 
-            } else {
                 if (interaction.isChatInputCommand())
                     await interaction.reply({ content: `Rolling Dice...`, ephemeral: true });
 
@@ -74,6 +73,8 @@ module.exports = {
 
 
                     })
+            } else {
+                    await interaction.reply({ content: `Please only roll dice in <#${guildRule.channelId}>`, ephemeral: true })
             }
 
         } catch (error) {

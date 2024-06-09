@@ -6,6 +6,12 @@ const settingsCache = require('../utility/settingsCache.js')
 var jsonData;
 
 function appendOrUpdateObject(newObj, targetArray, key) {
+
+    if (!targetArray || targetArray == null || targetArray == undefined) {
+        targetArray = [newObj];
+        return targetArray;
+    }
+
     const existingIndex = targetArray?.findIndex(item => item[key] === newObj[key]);
     if (!existingIndex) {
         targetArray = []
@@ -30,6 +36,17 @@ module.exports = {
         subcomand
             .setName('logging')
             .setDescription('Set up logging functionality. Also requires website setup')
+            .addChannelOption(option => 
+                option
+                    .setName('channel')
+                    .setDescription('Channel to send logs to. Empty = this channel')
+                    .setRequired(false)
+                    .addChannelTypes(ChannelType.GuildText))
+        )   
+    .addSubcommand(subcomand =>
+        subcomand
+            .setName('secondary-rolling')
+            .setDescription('Set up a secondary rolling channel, seperate from the logging channel')
             .addChannelOption(option => 
                 option
                     .setName('channel')
@@ -68,6 +85,28 @@ module.exports = {
             // New setting object
             const newObj = { 'guildId': interaction.guildId, 'channelId': channel };
             settings.logging = appendOrUpdateObject(newObj, settings.logging, 'guildId')
+
+            // Write updated jsonData to the settings file
+            settingsCache.SaveSettings(settings);
+
+            await interaction.reply({ content: `Channel <#${channel}> set up for logging.`, ephemeral: true });
+
+        }
+
+        // Secondary Rolling setup
+        if (interaction.options.getSubcommand() === 'secondary-rolling') {
+
+            let channelInput = interaction.options.getChannel('channel') ?? interaction.channelId;
+
+            if (typeof channelInput !== 'string')
+                channelInput = String(channelInput)
+
+            // Clean channel input value
+            const channel = channelInput.replace(/\D/g, '');
+
+            // New setting object
+            const newObj = { 'guildId': interaction.guildId, 'channelId': channel };
+            settings.secondaryRolling = appendOrUpdateObject(newObj, settings.secondaryRolling, 'guildId')
 
             // Write updated jsonData to the settings file
             settingsCache.SaveSettings(settings);
