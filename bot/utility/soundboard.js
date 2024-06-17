@@ -84,9 +84,9 @@ function playRollSound(percentage, guildId, userId) {
     diceAudio.volume.setVolumeDecibels(5)
 
     player.play(diceAudio);
+    
 
-
-    if (userId == "128870796624920576" && (percentage >= 80 || percentage == 69)) {
+    if (percentage >= 90 || percentage == 69) {
         setTimeout(() => {
             let audio;
             if (percentage == 69) {
@@ -97,7 +97,7 @@ function playRollSound(percentage, guildId, userId) {
                 audio = createAudioResource(path.join(__dirname, '../../audio/getfucked.mp3'), { inlineVolume: true })
             }
         
-            else if (percentage >= 80) {
+            else if (percentage >= 90) {
                 audio = createAudioResource(path.join(__dirname, '../../audio/ranald.mp3'), { inlineVolume: true });
             }
 
