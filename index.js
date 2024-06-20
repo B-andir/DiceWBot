@@ -1,14 +1,12 @@
-const path = require('path');
 const express = require('express');
-const session = require('express-session');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 require('dotenv').config();
 
-// const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-// const app = express();
+const app = express();
 
 // Connect to Database
 
@@ -23,12 +21,11 @@ require('./bot/bot-client.js').clientLogin();
 
 // Website
 
-// app.use(bodyParser.json());
-// app.use(express.static('public'));
+app.use(bodyParser.json());
 
-// app.post('/api/roll', require('./api/roll.js'))
+app.post('/api/rollPercent', require('./api/roll-percent.js'))
+app.post('/api/rollDice', require('./api/roll-dice.js'))
 
-
-// app.listen(PORT, () => {
-//     console.log(`\nWeb Server running on port ${PORT}...`);
-// });
+app.listen(PORT, () => {
+    console.log(`\nWeb Server running on port ${PORT}...`);
+});

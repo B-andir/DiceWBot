@@ -268,5 +268,5 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 
 // ----- Exports -----
 
-module.exports = { clientLogin };
+module.exports = { clientLogin, logRoll: () => {}, logPercent: () => {} };
 exports.client = client
