@@ -1,6 +1,6 @@
 const path = require('node:path');
 
-const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, AudioPlayerStatus, NoSubscriberBehavior, createAudioResource } = require('@discordjs/voice');
+const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, AudioPlayerStatus, NoSubscriberBehavior, createAudioResource, VoiceConnection } = require('@discordjs/voice');
 const ActiveVoiceConnections = require('../../models/active-voice-connections.js');
 const bot = require('../bot-client.js');
 
@@ -70,8 +70,6 @@ async function disconnectVoice(guildId) {
 
 function playRollSound(percentage, guildId, isSecretChannel) {
 
-    console.log(isSecretChannel)
-    
     const connection = getVoiceConnection(guildId)
     
     if (!connection) {

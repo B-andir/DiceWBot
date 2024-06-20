@@ -20,10 +20,10 @@ module.exports = {
 
         try {
 
-            const loggingChannelId = settings.loggingChannelId;
-            const secondaryChannelId = settings.secondDiceChannelId;
+            const loggingChannelId = settings?.loggingChannelId;
+            const secondaryChannelId = settings?.secondDiceChannelId;
 
-            if ((settings && loggingChannelId == interaction.channelId) || (secondaryChannelId == interaction.channelId) || (settings && !loggingChannelId)) {
+            if ((settings && !loggingChannelId) || !settings || (settings && loggingChannelId == interaction.channelId) || secondaryChannelId == interaction.channelId) {
                 // Restrict dice rolls to dice-log and secondary channels
                 
                 const numberOfDice = interaction.options.getNumber('dice-count') ?? 1;

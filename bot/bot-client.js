@@ -88,8 +88,8 @@ const rollActionRow = new ActionRowBuilder()
 client.on(Events.MessageCreate, async message => {
 	let settings = await GetSettings(message.guildId)
 	
-	const loggingChannelId = settings.loggingChannelId;
-	const secondaryDiceChannelId = settings.secondDiceChannelId;
+	const loggingChannelId = settings?.loggingChannelId;
+	const secondaryDiceChannelId = settings?.secondDiceChannelId;
 
 	if (loggingChannelId || secondaryDiceChannelId) {
 
