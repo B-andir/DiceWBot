@@ -37,6 +37,7 @@
     "ffmpeg": "^0.0.4",
     "ffmpeg-static": "^5.2.0",
     "libsodium-wrappers": "^0.7.13",
+    "mongoose": "^8.4.3",
     "nodemon": "^3.1.0",
     "uuid": "^9.0.1"
   }

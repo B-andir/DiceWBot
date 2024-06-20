@@ -1,12 +1,10 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js')
-const settingsCache = require('./utility/settingsCache.js')
+const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { GetSettings, SaveSettings, SaveSetting } = require('./utility/settings.js');
 const soundboard = require('./utility/soundboard.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] });
-
-let settingsExist = false;
 
 client.commands = new Collection();
 
@@ -29,8 +27,6 @@ for (const file of commandFiles) {
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
-	
-	loggingSetup();
 });
 
 
@@ -63,17 +59,17 @@ client.on(Events.InteractionCreate, async interaction => {
 			return;
 		}
 		
-		await command.execute(interaction);
-		// try {
-		// 	await command.execute(interaction);
-		// } catch (error) {
-		// 	console.error(error);
-		// 	if (interaction.replied || interaction.deferred) {
-		// 		await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-		// 	} else {
-		// 		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-		// 	}
-		// }
+		// await command.execute(interaction);
+		try {
+			await command.execute(interaction);
+		} catch (error) {
+			console.error(error);
+			if (interaction.replied || interaction.deferred) {
+				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+			} else {
+				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			}
+		}
 	}
 
 	
@@ -88,93 +84,136 @@ const rollButton = new ButtonBuilder()
 const rollActionRow = new ActionRowBuilder()
 	.addComponents(rollButton)	
 
-// Roll Dice button on bottom of Dice Channel
+// Roll Dice button on bottom of Dice Channels
 client.on(Events.MessageCreate, async message => {
-	let settings = settingsCache.GetCachedSettings();
+	let settings = await GetSettings(message.guildId)
 	
-	const loggingChannel = await settings.logging?.find((element) => { return element.channelId == message.channel });
+	const loggingChannelId = settings.loggingChannelId;
+	const secondaryDiceChannelId = settings.secondDiceChannelId;
 
-	if (loggingChannel) {
-		// console.log(message)
+	if (loggingChannelId || secondaryDiceChannelId) {
 
-		if (message.components) {
-			if (message.components.includes(rollActionRow)) {
-				console.log("Message already has action row.");
-				return;
+		// Logging Channel
+		if (message.channelId == loggingChannelId) {
+			if (message.components) {
+				if (message.components.includes(rollActionRow)) {
+					console.log("Message already has action row.");
+					return;
+				}
 			}
-		}
-
-		const channel = await client.channels.cache.get(loggingChannel.channelId);
-		
-		// If there is a message with a button, remove the button from that message.
-		if (loggingChannel.buttonMessageId) {
-			const oldMessage = await channel.messages.fetch(loggingChannel.buttonMessageId);
-		
-			try {
-				// If standalone message, delete message
-				if (loggingChannel.standaloneMessage) {
-					
-					oldMessage.delete();
 	
-				// Edit message to remove the components
+			try {
+				const channel = await client.channels.cache.get(loggingChannelId);
+				
+				// If there is a message with a button, remove the button from that message.
+				if (settings.buttonMessageId) {
+					const oldMessage = await channel.messages.fetch(settings.buttonMessageId);
+				
+					try {
+						// If standalone message, delete message
+						if (settings.buttonMessageStandalone) {
+							
+							oldMessage.delete();
+			
+						// Edit message to remove the components
+						} else {
+				
+							oldMessage.edit({ components: [] });
+						}
+					} catch (error) {
+						console.log("There was an error removing old button. As a result, it will not be removed. Error: ")
+						console.log(error);
+					}
+				
+				}
+				
+				// If last message was sent by this client
+				if (message.author.id == client.user.id) {
+					
+					message.edit( { components: [rollActionRow] } )
+		
+					SaveSettings(message.guildId, [{setting: 'buttonMessageId', value: message.id}, {setting: 'buttonMessageStandalone', value: false}])
+		
+				// Message was sent by a user, so send a new message with the action row
 				} else {
 		
-					oldMessage.edit({ components: [] });
+					channel.send({ components: [rollActionRow] })
+						.then(newMessage => {
+		
+							SaveSettings(newMessage.guildId, [{setting: 'buttonMessageId', value: newMessage.id}, {setting: 'buttonMessageStandalone', value: true}])
+		
+						}).catch(console.error);
+		
 				}
 			} catch (error) {
-				console.log("There was an error removing old button. As a result, it will not be removed. Error: ")
-				console.log(error);
+				console.log("There was an error when getting old dice button message. As a result, it will not be removed and the old message ID will be deleted from the database")
+				SaveSetting(message.guildId, "buttonMessageId", null);
 			}
-		
-		}
 
 
-		// If last message was sent by this client
-		if (message.author.id == client.user.id) {
-			
-			message.edit( { components: [rollActionRow] } )
-
-			// Update the logging object
-			for (let log of settings.logging) {
-				if (log.guildId === message.guildId || log.channelId === message.channelId) {
-					log.buttonMessageId = message.id;
-					log.standaloneMessage = false;
-					settingsCache.SaveSettings(settings);
-					break;
+		// Secondary Dice Channel
+		} else if (message.channelId == secondaryDiceChannelId) {
+			if (message.components) {
+				if (message.components.includes(rollActionRow)) {
+					console.log("Message already has action row.");
+					return;
 				}
 			}
-
-
-		// Message was sent by a user, so send a new message with the action row
-		} else {
-
-			channel.send({ components: [rollActionRow] })
-				.then(newMessage => {
-
-					// Update the logging object
-					for (let log of settings.logging) {
-						if (log.guildId === newMessage.guildId || log.channelId === newMessage.channelId) {
-							log.buttonMessageId = newMessage.id;
-							log.standaloneMessage = true;
-							settingsCache.SaveSettings(settings);
-							break;
-						}
-					}
-				}).catch(console.error);
-
-		}
-		
-
-	}
 	
+			try {
+				const channel = await client.channels.cache.get(secondaryDiceChannelId);
+			
+				// If there is a message with a button, remove the button from that message.
+				if (settings.secondaryButtonMessageId) {
+					const oldMessage = await channel.messages.fetch(settings.secondaryButtonMessageId);
+				
+					try {
+						// If standalone message, delete message
+						if (settings.secondaryButtonMessageStandalone) {
+							
+							oldMessage.delete();
+			
+						// Edit message to remove the components
+						} else {
+				
+							oldMessage.edit({ components: [] });
+						}
+					} catch (error) {
+						console.log("There was an error removing old button. As a result, it will not be removed. Error: ")
+						console.log(error);
+					}
+				
+				}
+		
+				// If last message was sent by this client
+				if (message.author.id == client.user.id) {
+					
+					message.edit( { components: [rollActionRow] } )
+		
+					SaveSettings(message.guildId, [{setting: 'secondaryButtonMessageId', value: message.id}, {setting: 'secondaryButtonMessageStandalone', value: false}])
+		
+				// Message was sent by a user, so send a new message with the action row
+				} else {
+		
+					channel.send({ components: [rollActionRow] })
+						.then(newMessage => {
+		
+							SaveSettings(newMessage.guildId, [{setting: 'secondaryButtonMessageId', value: newMessage.id}, {setting: 'secondaryButtonMessageStandalone', value: true}])
+		
+						}).catch(console.error);
+		
+				}
+			} catch (error) {
+				console.log("There was an error when getting old dice button message. As a result, it will not be removed and the old message ID will be deleted from the database")
+				SaveSetting(message.guildId, "secondaryButtonMessageId", null);
+			}
+		}
+	}
 });
 
 async function clientLogin() {
 	await client.login(process.env.BOT_TOKEN).then(async () => {
-		await settingsCache.UpdateCache().then(() => {
-			settingsExist = true;
-			soundboard.initialize();
-		});
+		soundboard.initialize();
 	});
 
 }
@@ -197,34 +236,6 @@ function appendOrUpdateObject(newObj, targetArray, key) {
     }
 
     return targetArray;
-}
-
-
-// Log Rolls
-async function logRoll(id, displayName, percentage, dice) {
-
-	const settings = settingsCache.GetCachedSettings();
-
-	const targetGuild = settings.websites?.find((element) => { return element.id == id });
-
-	if (targetGuild) {
-		const targetChannel = await settings.logging?.find((element) => { return element.guildId == targetGuild.guildId });
-
-		if (targetChannel) {
-
-			const channel = client.channels.cache.get(targetChannel.channelId);
-
-			await channel.send(`## Percentage: ${percentage}%\n> Rolls: **${dice[0]}** & **${dice[1]}**\t\t*~ ${displayName}*`);
-
-		} else {
-			console.error('There was an error logging dice roll. Could not find target channel of guildId: ' + targetGuild.guildId);
-			return;
-		}
-	} else {
-		console.error('There was an error logging dice roll. Could not find target guild of id: ' + id);
-		return;
-	}
-
 }
 
 // Soundboard
@@ -255,31 +266,7 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 });
 
 
-// Setup logging from environment vars
-async function loggingSetup() {
-	if (process.env.LOGGING_CHANNEL && process.env.LOGGING_CHANNEL_GUILD) {
-		console.log("Setting up logging from environment variables ...")
-
-		let settings = await settingsCache.GetCachedSettings();
-	
-		// New setting object
-		const newObj = { 'guildId': process.env.LOGGING_CHANNEL_GUILD, 'channelId': process.env.LOGGING_CHANNEL };
-		try {
-			settings.logging = appendOrUpdateObject(newObj, settings.logging, 'guildId')
-		} catch (error) {
-			console.error('There was an error building logging from environment vars: ' + error);
-			return;
-		}
-
-		// Write updated jsonData to the settings file
-		settingsCache.SaveSettings(settings);
-
-		console.log("Logging successfully set up!")
-	}
-}
-
-
 // ----- Exports -----
 
-module.exports = { clientLogin, logRoll };
+module.exports = { clientLogin };
 exports.client = client

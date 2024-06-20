@@ -1,8 +1,7 @@
 const path = require('node:path');
-const fs = require('fs');
 
 const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, AudioPlayerStatus, NoSubscriberBehavior, createAudioResource } = require('@discordjs/voice');
-const settingsCache = require('./settingsCache.js');
+const ActiveVoiceConnections = require('../../models/active-voice-connections.js');
 const bot = require('../bot-client.js');
 
 let player;
@@ -46,10 +45,12 @@ async function joinVoice(channelId, guildId, forced = false) {
 
     connection.subscribe(player);
 
-    let settings = settingsCache.GetCachedSettings();
-    settings.connections = appendOrUpdateObject({ guildId: guildId, channelId: channelId}, settings.connections, 'guildId') ;
+    let activeVoiceConnection = await ActiveVoiceConnections.findOneAndUpdate({ guildId: guildId}, {channelId: channelId});
 
-    settingsCache.SaveSettings(settings);
+    if (!activeVoiceConnection) {
+        activeVoiceConnection = new ActiveVoiceConnections({ guildId: guildId, channelId: channelId});
+        activeVoiceConnection.save();
+    }
 }
 
 
@@ -60,18 +61,17 @@ async function disconnectVoice(guildId) {
     if (connection) {
         connection.destroy();
 
-        let settings = settingsCache.GetCachedSettings();
-        settings.connections = appendOrUpdateObject({ guildId: guildId, channelId: 'none'}, settings.connections, 'guildId') ;
-    
-        settingsCache.SaveSettings(settings);
+        await ActiveVoiceConnections.findOneAndDelete({guildId: guildId});
     }
 
     return;
 
 }
 
-function playRollSound(percentage, guildId, userId) {
+function playRollSound(percentage, guildId, isSecretChannel) {
 
+    console.log(isSecretChannel)
+    
     const connection = getVoiceConnection(guildId)
     
     if (!connection) {
@@ -86,7 +86,7 @@ function playRollSound(percentage, guildId, userId) {
     player.play(diceAudio);
     
 
-    if (percentage >= 90 || percentage == 69) {
+    if (!isSecretChannel && (percentage >= 90 || percentage == 69)) {
         setTimeout(() => {
             let audio;
             if (percentage == 69) {
@@ -105,12 +105,12 @@ function playRollSound(percentage, guildId, userId) {
 
             player.play(audio);
 
-        }, 1400);
+        }, 1800);
     }
 
 }
 
-module.exports = { playRollSound, joinVoice, disconnectVoice, initialize: () => {
+module.exports = { playRollSound, joinVoice, disconnectVoice, initialize: async () => {
     console.log("Initializing audio player...");
     player = createAudioPlayer({
         behaviors: {
@@ -121,36 +121,26 @@ module.exports = { playRollSound, joinVoice, disconnectVoice, initialize: () => 
     player.on('playing', () => {
         
     });
-    
-    fs.readFile(path.join(__dirname, '../function-settings.json'), 'utf8', (error, jsonString) => {
-        if (error) {
-            console.warn(error);
-            return error;
-        }
 
-        let settings = JSON.parse(jsonString);
+    try {
+        const activeVoiceConnections = await ActiveVoiceConnections.find({});
 
-        
-        try {
-            if (settings.connections) {
-                settings.connections.forEach(connection => {
-                    if (connection.channelId != 'none') {
-                        console.log("Found active connection! Joining.");
-                        setTimeout(() => {
-                            joinVoice(connection.channelId, connection.guildId, true);
-                        }, 1000)
-                    }
-                });
-            } else {
-                console.log("No active connections to join.")
+        activeVoiceConnections.forEach(connection => {
+            try {
+                console.log("Found active connection! Joining...");
+                setTimeout(() => {
+                    joinVoice(connection.channelId, connection.guildId, true);
+                    console.log("Joined active voice connection.")
+                }, 1000)
+            } catch {
+                console.log(`Failed joining channel ${connection.channelId} in guild ${connection.guildId}, deleting from database.`);
+                ActiveVoiceConnections.findByIdAndDelete(connection['_id'])
             }
-        } catch (error) {
-            console.log(`There was an error when attempting connection. Error: ${error}`);
-        }
-
+        });
+    } catch (err) {
+        console.error(err);
+    }
     
-    });
-
 
     console.log("Audio Player Initilalized");
 }}

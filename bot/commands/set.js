@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const settingsCache = require('../utility/settingsCache.js')
+const { SaveUserPrefs } = require('../utility/settings.js')
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -22,27 +22,13 @@ module.exports = {
 
 		),
 	async execute(interaction) {
-		let settings = settingsCache.GetCachedSettings();
 
 		if (interaction.options.getSubcommand() === 'mentions') {
 
 			// If option is "off", disable pings will be true
 			const disablePings = interaction.options.getString('value') === 'off'
-
-
-			const existingIndex = settings.users?.findIndex(item => item['id'] === interaction.user.id);
-
-			if (!existingIndex) {
-				settings.users = []
-			}
-
-			if (existingIndex && existingIndex !== -1) {
-				settings.users[existingIndex] = { id: interaction.user.id, disablePings: disablePings };
-			} else {
-				settings.users.push({ id: interaction.user.id, disablePings: disablePings})
-			}
-
-			settingsCache.SaveSettings(settings);
+			
+			SaveUserPrefs(interaction.user.id, 'disabledPings', disablePings)
 
 			if (disablePings) {
 

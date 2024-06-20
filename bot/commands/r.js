@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const generatePercent = require('../../Utility/generate-percentage.js')
 const percentToNumbers = require('../../Utility/percent-to-dice.js')
-const { GetCachedSettings } = require('../utility/settingsCache.js')
+const { GetSettings, GetUserPrefs } = require('../utility/settings.js')
 const { playRollSound } = require('../utility/soundboard.js');
 
 module.exports = {
@@ -24,14 +24,14 @@ module.exports = {
             }
         }
 
-        const settings = GetCachedSettings();
+        const settings = await GetSettings(interaction.guildId);
 
         try {
 
-            const guildRule = settings.logging?.find(item => item.guildId === interaction.guildId);
-            const secondaryRule = settings.secondaryRolling?.find(item => item.guildId === interaction.guildId);
+            const loggingChannelId = settings.loggingChannelId;
+            const secondaryChannelId = settings.secondDiceChannelId;
 
-            if ((guildRule && guildRule.channelId == interaction.channelId) || (secondaryRule && secondaryRule.channelId == interaction.channelId)) {
+            if ((settings && loggingChannelId == interaction.channelId) || secondaryChannelId == interaction.channelId || (settings && !loggingChannelId)) {
                 // Restrict dice rolls to dice-log and secondary channels
                 
                 if (interaction.isChatInputCommand())
@@ -51,7 +51,7 @@ module.exports = {
                             }
                         }
 
-                        playRollSound(percent, interaction.guildId, interaction.user.id);
+                        playRollSound(percent, interaction.guildId, secondaryChannelId == interaction.channelId);
         
                         const numbers = await percentToNumbers(percent)
 
@@ -59,9 +59,8 @@ module.exports = {
                             interaction.deleteReply();
                         }
 
-                        const userSettings = await settings.users?.find((element) => { return element.id == interaction.user.id }) ?? undefined;
-
-                        if (userSettings && userSettings.disablePings === true) {
+                        const userSettings = await GetUserPrefs(interaction.user.id)
+                        if (userSettings && userSettings.disabledPings === true) {
                             let name = interaction.user.displayName;
                             if (interaction.member.nickname)
                                 name = interaction.member.nickname;
@@ -74,7 +73,7 @@ module.exports = {
 
                     })
             } else {
-                    await interaction.reply({ content: `Please only roll dice in <#${guildRule.channelId}>`, ephemeral: true })
+                    await interaction.reply({ content: `Please only roll dice in <#${loggingChannelId}>`, ephemeral: true })
             }
 
         } catch (error) {

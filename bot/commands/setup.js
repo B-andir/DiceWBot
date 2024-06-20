@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid')
 const { SlashCommandBuilder, ChannelType, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const { isNumber } = require('util');
-const settingsCache = require('../utility/settingsCache.js')
+const { SaveSetting } = require('../utility/settings.js')
 
 var jsonData;
 
@@ -69,8 +69,6 @@ module.exports = {
 
     async execute(interaction) {
 
-        const settings = settingsCache.GetCachedSettings();
-
         // Logging setup
         if (interaction.options.getSubcommand() === 'logging') {
 
@@ -81,13 +79,8 @@ module.exports = {
 
             // Clean channel input value
             const channel = channelInput.replace(/\D/g, '');
-
-            // New setting object
-            const newObj = { 'guildId': interaction.guildId, 'channelId': channel };
-            settings.logging = appendOrUpdateObject(newObj, settings.logging, 'guildId')
-
-            // Write updated jsonData to the settings file
-            settingsCache.SaveSettings(settings);
+            
+            SaveSetting(interaction.guildId, 'loggingChannelId', channel);
 
             await interaction.reply({ content: `Channel <#${channel}> set up for logging.`, ephemeral: true });
 
@@ -104,14 +97,9 @@ module.exports = {
             // Clean channel input value
             const channel = channelInput.replace(/\D/g, '');
 
-            // New setting object
-            const newObj = { 'guildId': interaction.guildId, 'channelId': channel };
-            settings.secondaryRolling = appendOrUpdateObject(newObj, settings.secondaryRolling, 'guildId')
+            SaveSetting(interaction.guildId, 'secondDiceChannelId', channel);
 
-            // Write updated jsonData to the settings file
-            settingsCache.SaveSettings(settings);
-
-            await interaction.reply({ content: `Channel <#${channel}> set up for logging.`, ephemeral: true });
+            await interaction.reply({ content: `Channel <#${channel}> set up for dice rolling.`, ephemeral: true });
 
         }
 

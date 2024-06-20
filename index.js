@@ -2,6 +2,7 @@ const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 require('dotenv').config();
 
@@ -9,6 +10,11 @@ require('dotenv').config();
 
 // const app = express();
 
+// Connect to Database
+
+mongoose.connect(process.env.MONGODB_URI).then(()=> {
+    console.log("Connected to MongoDB Cluster");
+})
 
 // Discord App
 
