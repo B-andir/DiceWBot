@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
-const { GetSettings, GetUserPrefs, SaveSettings } = require('./utility/settings.js');
+const { GetSettings, GetUserPrefs, SaveSettings, SaveSetting } = require('./utility/settings.js');
 const soundboard = require('./utility/soundboard.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] });
@@ -106,7 +106,7 @@ client.on(Events.MessageCreate, async message => {
 				const channel = await client.channels.cache.get(loggingChannelId);
 				
 				// If there is a message with a button, remove the button from that message.
-				if (settings.buttonMessageId) {
+				if (settings.buttonMessageId && settings.buttonMessageId != "") {
 					const oldMessage = await channel.messages.fetch(settings.buttonMessageId);
 				
 					try {
@@ -164,7 +164,7 @@ client.on(Events.MessageCreate, async message => {
 				const channel = await client.channels.cache.get(secondaryDiceChannelId);
 			
 				// If there is a message with a button, remove the button from that message.
-				if (settings.secondaryButtonMessageId) {
+				if (settings.secondaryButtonMessageId && settings.secondaryButtonMessageId != "") {
 					const oldMessage = await channel.messages.fetch(settings.secondaryButtonMessageId);
 				
 					try {
