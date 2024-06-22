@@ -4,15 +4,17 @@ const { logRoll } = require('../bot/bot-client.js');
 
 module.exports = async (req, res) => {
 
-    const dice = await genRolls();
+    const dice = await genRolls(req.body.data.numDice);
 
     let total = 0;
     
-    dice.forEach(element => {
-        total += element;
-    });
+    if (dice.length > 0) {
+        dice.forEach(element => {
+            total += element;
+        });
+    }
 
-    logRoll(req.body.data.id, req.body.data.displayName, total, dice)
+    logRoll(req.body.data.id, req.body.data.guildId, total, dice)
 
     res.send({ total: total, dice: dice });
 }

@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
     const percent = await genPercent();
     const dice = await percentToDice(percent);
 
-    logPercent(req.body.data.id, req.body.data.displayName, percent, dice)
+    logPercent(req.body.data.id, req.body.data.guildId, percent, dice)
 
-    res.send({ percent: percent, dice: dice });
+    res.send({ total: percent, dice: dice });
 }

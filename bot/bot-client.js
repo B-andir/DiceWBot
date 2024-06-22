@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { GetSettings, SaveSettings, SaveSetting } = require('./utility/settings.js');
+const { GetSettings, GetUserPrefs, SaveSettings } = require('./utility/settings.js');
 const soundboard = require('./utility/soundboard.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] });
@@ -238,7 +238,12 @@ function appendOrUpdateObject(newObj, targetArray, key) {
     return targetArray;
 }
 
-// Soundboard
+function getGuilds() {
+	return client.guilds.cache.map(guild => guild.id);
+}
+
+// ----- Soundboard -----
+
 client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 	if (oldState.member.user.bot || newState.member.user.bot) return;
 
@@ -266,7 +271,72 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 });
 
 
+// ----- Dice Logging -----
+
+async function logRoll(userId, guildId, total, numbers) {
+    const settings = await GetSettings(guildId)
+	const loggingChannelId = settings?.loggingChannelId;
+    const channel = await client.channels.fetch(loggingChannelId);
+    
+    const userSettings = await GetUserPrefs(userId);
+
+    let responseString = `## Dice Result: ${total}\n`;
+
+    if (numbers.length > 1) {
+        responseString += '> Rolls: '
+        for (let index = 0; index < numbers.length; index++) {
+            const element = numbers[index];
+
+            responseString += `**${element}**`
+            
+            if (index < numbers.length - 1) {
+                responseString += '  |  '
+            }
+        }
+    }
+
+    let user = await client.users.fetch(userId);
+	let guild = await client.guilds.fetch(guildId);
+	let member = await guild.members.fetch(userId);
+
+    if (userSettings && userSettings.disabledPings === true) {
+        let name = user.displayName;
+        if (member.nickname)
+            name = member.nickname;
+
+        responseString += `\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`
+        
+    } else {
+        responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
+    }
+
+    await channel.send(responseString);
+    
+}
+
+async function logPercent(userId, guildId, totalResult, dice) {
+    const settings = await GetSettings(guildId)
+	const loggingChannelId = settings?.loggingChannelId;
+    const channel = await client.channels.fetch(loggingChannelId);
+    
+    const userSettings = await GetUserPrefs(userId);
+
+    let user = await client.users.fetch(userId);
+	let guild = await client.guilds.fetch(guildId);
+	let member = await guild.members.fetch(userId);
+
+	if (userSettings && userSettings.disabledPings === true) {
+		let name = user.displayName;
+		if (member.nickname)
+			name = member.nickname;
+
+		await channel.send(`## Percentage: ${totalResult}%\n> Rolls: **${dice[0]}**  |  **${dice[1]}**\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`);
+	} else {
+		await channel.send(`## Percentage: ${totalResult}%\n> Rolls: **${dice[0]}**  |  **${dice[1]}**\n\t\t\t\t\t\t\t\t\t*~ <@${user.id}>*\n-----`);
+	}
+}
+
 // ----- Exports -----
 
-module.exports = { clientLogin, logRoll: () => {}, logPercent: () => {} };
+module.exports = { clientLogin, logRoll, logPercent, getGuilds };
 exports.client = client
