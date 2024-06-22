@@ -319,7 +319,7 @@ async function logRoll(userId, guildId, total, numbers, isSecret = false) {
         responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
     }
 	
-	soundboard.playRollSound(10, guildId, isSecret);
+	soundboard.playRollSound(10, guildId, isSecret && isAdmin);
 
     await channel.send(responseString);
     
@@ -373,7 +373,7 @@ async function logPercent(userId, guildId, percent, dice, isSecret = false) {
         responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
     }
 
-	soundboard.playRollSound(percent, guildId, isSecret);
+	soundboard.playRollSound(percent, guildId, isSecret && isAdmin);
 
     await channel.send(responseString);
 }
