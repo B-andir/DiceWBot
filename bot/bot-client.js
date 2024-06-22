@@ -316,7 +316,7 @@ async function logRoll(userId, guildId, total, numbers, isSecret = false) {
         let name = user.displayName;
         if (member.nickname)
             name = member.nickname;
-		
+
         responseString += `\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`
     }
 	
@@ -358,7 +358,7 @@ async function logPercent(userId, guildId, percent, dice, skillCheck, isSecret =
 
 	} else {
 
-		let numOf = Math.abs(Math.floor((skillCheck - percent) * 0.1));
+		let numOf = Math.abs(Math.floor(((skillCheck - percent) * 0.1)));
 		let isSuccessful = (percent <= skillCheck);
 		let SuccessOrFail = numOf == 1 ? isSuccessful ? 'Success' : 'Failure' : isSuccessful ? 'Successes' : 'Failures';
 
