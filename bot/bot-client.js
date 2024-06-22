@@ -362,7 +362,7 @@ async function logPercent(userId, guildId, percent, dice, skillCheck, isSecret =
 		let isSuccessful = (percent <= skillCheck);
 		let SuccessOrFail = numOf == 1 ? isSuccessful ? 'Success' : 'Failure' : isSuccessful ? 'Successes' : 'Failures';
 
-		responseString = `## ${numOf} ${SuccessOrFail}\n**${percent}%** *vs* ${skillCheck}\n` 
+		responseString = `## ${numOf} ${SuccessOrFail}\n**${percent}%** *vs* ${skillCheck} skill value\n` 
 
 	}
 	
