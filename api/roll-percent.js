@@ -5,6 +5,8 @@ const { logPercent } = require('../bot/bot-client.js');
 
 module.exports = async (req, res) => {
 
+    console.log(req.body.data);
+
     const percent = await genPercent();
     const dice = await percentToDice(percent);
 
