@@ -91,7 +91,7 @@ client.on(Events.MessageCreate, async message => {
 	const loggingChannelId = settings?.loggingChannelId;
 	const secondaryDiceChannelId = settings?.secondDiceChannelId;
 
-	if (loggingChannelId || secondaryDiceChannelId) {
+	if (loggingChannelId || secondaryDiceChannelId ) {
 
 		// Logging Channel
 		if (message.channelId == loggingChannelId) {
@@ -147,7 +147,7 @@ client.on(Events.MessageCreate, async message => {
 				}
 			} catch (error) {
 				console.log("There was an error when getting old dice button message. As a result, it will not be removed and the old message ID will be deleted from the database")
-				SaveSetting(message.guildId, "buttonMessageId", null);
+				SaveSetting(message.guildId, "buttonMessageId", "");
 			}
 
 
@@ -205,7 +205,7 @@ client.on(Events.MessageCreate, async message => {
 				}
 			} catch (error) {
 				console.log("There was an error when getting old dice button message. As a result, it will not be removed and the old message ID will be deleted from the database")
-				SaveSetting(message.guildId, "secondaryButtonMessageId", null);
+				SaveSetting(message.guildId, "secondaryButtonMessageId", "");
 			}
 		}
 	}
