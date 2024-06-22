@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
         });
     }
 
-    logRoll(req.body.data.id, req.body.data.guildId, total, dice)
+    logRoll(req.body.data.id, req.body.data.guildId, total, dice, req.body.data.isSecretRoll)
 
     res.send({ total: total, dice: dice });
 }

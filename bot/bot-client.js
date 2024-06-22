@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { GetSettings, GetUserPrefs, SaveSettings } = require('./utility/settings.js');
 const soundboard = require('./utility/soundboard.js');
 
@@ -273,9 +273,22 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 
 // ----- Dice Logging -----
 
-async function logRoll(userId, guildId, total, numbers) {
+async function logRoll(userId, guildId, total, numbers, isSecret = false) {
     const settings = await GetSettings(guildId)
-	const loggingChannelId = settings?.loggingChannelId;
+
+	let guild = await client.guilds.fetch(guildId);
+    let user = await client.users.fetch(userId);
+	let member = await guild.members.fetch(userId);
+
+	let isAdmin = member.hasPermission('ADMINISTRATOR');
+	
+	let loggingChannelId;
+	try {
+		// If roll should be secret, user is administrator, and there is a second dice channel, then set that channel as the logging channel. Otherwise, use the normal one.
+		loggingChannelId = isSecret && isAdmin ? settings?.secondDiceChannelId ?? settings?.loggingChannelId : settings?.loggingChannelId;
+	} catch {
+		return;
+	}
     const channel = await client.channels.fetch(loggingChannelId);
     
     const userSettings = await GetUserPrefs(userId);
@@ -295,9 +308,61 @@ async function logRoll(userId, guildId, total, numbers) {
         }
     }
 
-    let user = await client.users.fetch(userId);
+    if (userSettings && userSettings.disabledPings === true) {
+        let name = user.displayName;
+        if (member.nickname)
+            name = member.nickname;
+
+        responseString += `\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`
+        
+    } else {
+        responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
+    }
+	
+	soundboard.playRollSound(10, guildId, isSecret);
+
+    await channel.send(responseString);
+    
+}
+
+async function logPercent(userId, guildId, percent, dice, isSecret = false) {
+    const settings = await GetSettings(guildId)
+
 	let guild = await client.guilds.fetch(guildId);
+    let user = await client.users.fetch(userId);
 	let member = await guild.members.fetch(userId);
+
+	let isAdmin = member.permissions.has(PermissionFlagsBits.Administrator);
+	console.log(isAdmin);
+
+	let loggingChannelId;
+	
+	try {
+		// If roll should be secret, user is administrator, and there is a second dice channel, then set that channel as the logging channel. Otherwise, use the normal one.
+		loggingChannelId = isSecret && isAdmin ? settings?.secondDiceChannelId ?? settings?.loggingChannelId : settings?.loggingChannelId;
+	} catch {
+		return;
+	}
+	
+    const channel = await client.channels.fetch(loggingChannelId);
+    
+    const userSettings = await GetUserPrefs(userId);
+
+    let responseString = `## Percentage: ${percent}%\n`;
+
+    if (dice.length > 1) {
+        responseString += '> Rolls: '
+        for (let index = 0; index < dice.length; index++) {
+            const element = dice[index];
+
+            responseString += `**${element}**`
+            
+            if (index < dice.length - 1) {
+                responseString += '  |  '
+            }
+        }
+    }
+	
 
     if (userSettings && userSettings.disabledPings === true) {
         let name = user.displayName;
@@ -310,30 +375,11 @@ async function logRoll(userId, guildId, total, numbers) {
         responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
     }
 
+	soundboard.playRollSound(percent, guildId, isSecret);
+
+	console.log("Logged dice roll in channelID " + loggingChannelId)
+
     await channel.send(responseString);
-    
-}
-
-async function logPercent(userId, guildId, totalResult, dice) {
-    const settings = await GetSettings(guildId)
-	const loggingChannelId = settings?.loggingChannelId;
-    const channel = await client.channels.fetch(loggingChannelId);
-    
-    const userSettings = await GetUserPrefs(userId);
-
-    let user = await client.users.fetch(userId);
-	let guild = await client.guilds.fetch(guildId);
-	let member = await guild.members.fetch(userId);
-
-	if (userSettings && userSettings.disabledPings === true) {
-		let name = user.displayName;
-		if (member.nickname)
-			name = member.nickname;
-
-		await channel.send(`## Percentage: ${totalResult}%\n> Rolls: **${dice[0]}**  |  **${dice[1]}**\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`);
-	} else {
-		await channel.send(`## Percentage: ${totalResult}%\n> Rolls: **${dice[0]}**  |  **${dice[1]}**\n\t\t\t\t\t\t\t\t\t*~ <@${user.id}>*\n-----`);
-	}
 }
 
 // ----- Exports -----
