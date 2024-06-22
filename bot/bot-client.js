@@ -308,15 +308,16 @@ async function logRoll(userId, guildId, total, numbers, isSecret = false) {
         }
     }
 
-    if (userSettings && userSettings.disabledPings === true) {
+    if (userSettings && userSettings.disabledPings === false) {
+
+        responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
+
+    } else {
         let name = user.displayName;
         if (member.nickname)
             name = member.nickname;
-
+		
         responseString += `\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`
-        
-    } else {
-        responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
     }
 	
 	soundboard.playRollSound(10, guildId, isSecret && isAdmin);
@@ -325,7 +326,7 @@ async function logRoll(userId, guildId, total, numbers, isSecret = false) {
     
 }
 
-async function logPercent(userId, guildId, percent, dice, isSecret = false) {
+async function logPercent(userId, guildId, percent, dice, skillCheck, isSecret = false) {
     const settings = await GetSettings(guildId)
 
 	let guild = await client.guilds.fetch(guildId);
@@ -346,36 +347,54 @@ async function logPercent(userId, guildId, percent, dice, isSecret = false) {
     
     const userSettings = await GetUserPrefs(userId);
 
-    let responseString = `## Percentage: ${percent}%\n`;
-
-    if (dice.length > 1) {
-        responseString += '> Rolls: '
-        for (let index = 0; index < dice.length; index++) {
-            const element = dice[index];
-
-            responseString += `**${element}**`
-            
-            if (index < dice.length - 1) {
-                responseString += '  |  '
-            }
-        }
-    }
+	let responseString;
 	
+	if (percent == 100) {
 
-    if (userSettings && userSettings.disabledPings === true) {
-        let name = user.displayName;
-        if (member.nickname)
-            name = member.nickname;
+		responseString = `## Critical Failure!\n**${percent}%**\n`
 
-        responseString += `\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`
-        
-    } else {
-        responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
-    }
+	} else if (skillCheck == null) {
+		responseString = `## Percentage: ${percent}%\n`;
 
+	} else {
+
+		let numOf = Math.abs(Math.floor((skillCheck - percent) * 0.1));
+		let isSuccessful = (percent <= skillCheck);
+		let SuccessOrFail = numOf == 1 ? isSuccessful ? 'Success' : 'Failure' : isSuccessful ? 'Successes' : 'Failures';
+
+		responseString = `## ${numOf} ${SuccessOrFail}\n**${percent}%** *vs* ${skillCheck}\n` 
+
+	}
+	
+	if (dice.length > 1) {
+
+		responseString += '> Rolls: '
+		for (let index = 0; index < dice.length; index++) {
+			const element = dice[index];
+
+			responseString += `**${element}**`
+			
+			if (index < dice.length - 1) {
+				responseString += '  |  '
+			}
+		}
+	}
+	
+	if (userSettings && userSettings.disabledPings === false) {
+
+		responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${userId}>*\n-----`
+		
+	} else {
+		let name = user.displayName;
+		if (member.nickname)
+			name = member.nickname;
+		
+		responseString += `\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`
+	}
+	
 	soundboard.playRollSound(percent, guildId, isSecret && isAdmin);
 
-    await channel.send(responseString);
+	await channel.send(responseString);
 }
 
 // ----- Exports -----

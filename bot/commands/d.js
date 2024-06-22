@@ -70,15 +70,16 @@ module.exports = {
                     }
                 }
 
-                if (userSettings && userSettings.disabledPings === true) {
+                if (userSettings && userSettings.disabledPings === false) {
+
+                    responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${interaction.user.id}>*\n-----`
+                    
+                } else {
                     let name = interaction.user.displayName;
                     if (interaction.member.nickname)
                         name = interaction.member.nickname;
-
-                    responseString += `\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`
                     
-                } else {
-                    responseString += `\n\t\t\t\t\t\t\t\t\t*~ <@${interaction.user.id}>*\n-----`
+                    responseString += `\n\t\t\t\t\t\t\t\t\t*~ ${name}*\n-----`
                 }
 
                 await interaction.channel.send(responseString);
