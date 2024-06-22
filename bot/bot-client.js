@@ -358,7 +358,7 @@ async function logPercent(userId, guildId, percent, dice, skillCheck, isSecret =
 
 	} else {
 
-		let numOf = Math.abs(Math.floor(((percent - skillCheck) * 0.1)));
+		let numOf = Math.abs(Math.floor((Math.abs(percent - skillCheck))* 0.1));
 		let isSuccessful = (percent <= skillCheck);
 		let SuccessOrFail = numOf == 1 ? isSuccessful ? 'Success' : 'Failure' : isSuccessful ? 'Successes' : 'Failures';
 
