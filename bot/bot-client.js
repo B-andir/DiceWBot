@@ -280,7 +280,7 @@ async function logRoll(userId, guildId, total, numbers, isSecret = false) {
     let user = await client.users.fetch(userId);
 	let member = await guild.members.fetch(userId);
 
-	let isAdmin = member.hasPermission('ADMINISTRATOR');
+	let isAdmin = member.permissions.has(PermissionFlagsBits.Administrator);
 	
 	let loggingChannelId;
 	try {
@@ -333,10 +333,8 @@ async function logPercent(userId, guildId, percent, dice, isSecret = false) {
 	let member = await guild.members.fetch(userId);
 
 	let isAdmin = member.permissions.has(PermissionFlagsBits.Administrator);
-	console.log(isAdmin);
 
 	let loggingChannelId;
-	
 	try {
 		// If roll should be secret, user is administrator, and there is a second dice channel, then set that channel as the logging channel. Otherwise, use the normal one.
 		loggingChannelId = isSecret && isAdmin ? settings?.secondDiceChannelId ?? settings?.loggingChannelId : settings?.loggingChannelId;
@@ -376,8 +374,6 @@ async function logPercent(userId, guildId, percent, dice, isSecret = false) {
     }
 
 	soundboard.playRollSound(percent, guildId, isSecret);
-
-	console.log("Logged dice roll in channelID " + loggingChannelId)
 
     await channel.send(responseString);
 }
