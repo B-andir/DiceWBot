@@ -23,10 +23,10 @@ require('./bot/bot-client.js').clientLogin();
 
 app.use(bodyParser.json());
 
-app.post('/api/secrets', require('./api/get-secrets.js'));
-app.post('/api/bot-guilds', require('./api/get-bot-guilds.js'));
-app.post('/api/roll-percent', require('./api/roll-percent.js'));
-app.post('/api/roll-dice', require('./api/roll-dice.js'));
+app.get('/api/secrets', require('./api/get-secrets.js'));
+app.get('/api/bot-guilds', require('./api/get-bot-guilds.js'));
+app.get('/api/roll-percent', require('./api/roll-percent.js'));
+app.get('/api/roll-dice', require('./api/roll-dice.js'));
 
 app.listen(PORT, () => {
     console.log(`\nWeb Server running on port ${PORT}...`);
